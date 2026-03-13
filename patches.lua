@@ -380,6 +380,90 @@ function M.patchCollections(plugin)
         end
         return orig_menu_new(class, attrs, ...)
     end
+
+    -- Patch ReadCollection to keep the SimpleUI collections pool in sync when
+    -- a collection is renamed or deleted from within KOReader.
+    local ok_rc, RC = pcall(require, "readcollection")
+    if ok_rc and RC then
+        -- Removes a collection name from the SimpleUI selected list and
+        -- cover-override table, then refreshes the Desktop if visible.
+        local function _removeFromPool(name)
+            local ok_cw, CW = pcall(require, "collectionswidget")
+            if not (ok_cw and CW) then return end
+            local selected = CW.getSelected()
+            local changed  = false
+            for i = #selected, 1, -1 do
+                if selected[i] == name then
+                    table.remove(selected, i)
+                    changed = true
+                end
+            end
+            if changed then CW.saveSelected(selected) end
+            local overrides = CW.getCoverOverrides()
+            if overrides[name] then
+                overrides[name] = nil
+                CW.saveCoverOverrides(overrides)
+            end
+        end
+
+        -- Renames a collection entry in the SimpleUI selected list and
+        -- cover-override table, then refreshes the Desktop if visible.
+        local function _renameInPool(old_name, new_name)
+            local ok_cw, CW = pcall(require, "collectionswidget")
+            if not (ok_cw and CW) then return end
+            local selected = CW.getSelected()
+            local changed  = false
+            for i, name in ipairs(selected) do
+                if name == old_name then
+                    selected[i] = new_name
+                    changed = true
+                end
+            end
+            if changed then CW.saveSelected(selected) end
+            local overrides = CW.getCoverOverrides()
+            if overrides[old_name] then
+                overrides[new_name] = overrides[old_name]
+                overrides[old_name] = nil
+                CW.saveCoverOverrides(overrides)
+            end
+        end
+
+        -- Schedules a Desktop refresh if it is currently visible.
+        local function _refreshDesktop()
+            local ok_d, Desktop = pcall(require, "desktop")
+            if ok_d and Desktop and Desktop._desktop_widget and Desktop._fm then
+                Desktop:refresh()
+            end
+        end
+
+        -- Patch removeCollection (called when the user deletes a collection).
+        if type(RC.removeCollection) == "function" then
+            local orig_remove = RC.removeCollection
+            plugin._orig_rc_remove = orig_remove
+            RC.removeCollection = function(rc_self, coll_name, ...)
+                local result = orig_remove(rc_self, coll_name, ...)
+                pcall(function()
+                    _removeFromPool(coll_name)
+                    _refreshDesktop()
+                end)
+                return result
+            end
+        end
+
+        -- Patch renameCollection (called when the user renames a collection).
+        if type(RC.renameCollection) == "function" then
+            local orig_rename = RC.renameCollection
+            plugin._orig_rc_rename = orig_rename
+            RC.renameCollection = function(rc_self, old_name, new_name, ...)
+                local result = orig_rename(rc_self, old_name, new_name, ...)
+                pcall(function()
+                    _renameInPool(old_name, new_name)
+                    _refreshDesktop()
+                end)
+                return result
+            end
+        end
+    end
 end
 
 -- ---------------------------------------------------------------------------
@@ -771,6 +855,11 @@ function M.teardownAll(plugin)
     local ok_fc, FMColl = pcall(require, "apps/filemanager/filemanagercollection")
     if ok_fc and FMColl and plugin._orig_fmcoll_show then
         FMColl.onShowCollList = plugin._orig_fmcoll_show; plugin._orig_fmcoll_show = nil
+    end
+    local ok_rc, RC = pcall(require, "readcollection")
+    if ok_rc and RC then
+        if plugin._orig_rc_remove then RC.removeCollection = plugin._orig_rc_remove; plugin._orig_rc_remove = nil end
+        if plugin._orig_rc_rename then RC.renameCollection = plugin._orig_rc_rename; plugin._orig_rc_rename = nil end
     end
     local ok_fch, FileChooser = pcall(require, "ui/widget/filechooser")
     if ok_fch and FileChooser and plugin._orig_fc_init then
