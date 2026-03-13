@@ -428,6 +428,10 @@ function CollectionsWidget.getCoverOverrides()
     return getCoverOverrides()
 end
 
+function CollectionsWidget.saveCoverOverrides(t)
+    saveCoverOverrides(t)
+end
+
 function CollectionsWidget.saveCoverOverride(coll_name, filepath)
     local t = getCoverOverrides()
     t[coll_name] = filepath
