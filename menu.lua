@@ -1414,9 +1414,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text               = _("Settings"),
                 sub_item_table_func = function()
                     return {
-                        { text = _("Bottom Bar"),    sub_item_table_func = makeNavbarMenu },
-                        { text = _("Home Screen"),     sub_item_table_func = makeHomescreenMenu },
+                        { text = _("Top Bar"),        sub_item_table_func = makeTopbarMenu },
+                        { text = _("Home Screen"),    sub_item_table_func = makeHomescreenMenu },
                         { text = _("Pagination Bar"), sub_item_table_func = makePaginationBarMenu },
+                        { text = _("Bottom Bar"),     sub_item_table_func = makeNavbarMenu },
                         {
                             text_func = function()
                                 local n   = #getCustomQAList()
@@ -1429,7 +1430,6 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                             end,
                             sub_item_table_func = makeQuickActionsMenu,
                         },
-                        { text = _("Top Bar"), sub_item_table_func = makeTopbarMenu },
                     }
                 end,
             },

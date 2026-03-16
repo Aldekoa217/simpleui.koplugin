@@ -518,6 +518,23 @@ function HomescreenWidget:onClose()
     return true
 end
 
+function HomescreenWidget:onSuspend()
+    -- Cancel the clock timer so it doesn't fire unnecessarily during suspend.
+    -- _scheduleClockRefresh already deduplicates, so onResume can safely
+    -- restart it without checking whether it was running before.
+    if self._clock_timer then
+        UIManager:unschedule(self._clock_timer)
+        self._clock_timer = nil
+    end
+end
+
+function HomescreenWidget:onResume()
+    -- Restart the clock timer. _scheduleClockRefresh recalculates the phase
+    -- from os.time(), so the clock is always correct after wakeup regardless
+    -- of how long the device was suspended.
+    self:_scheduleClockRefresh()
+end
+
 function HomescreenWidget:onCloseWidget()
     -- Cancel ALL pending timers and scheduled callbacks immediately.
     -- This is critical: cover-load callbacks and the clock timer can fire

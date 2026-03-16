@@ -88,7 +88,7 @@ function M.build(w, ctx)
     meta[#meta+1] = VerticalSpan:new{ width = BAR_GAP }
 
     meta[#meta+1] = TextWidget:new{
-        text    = string.format("%d%% Read", math.floor((bd.percent or 0) * 100)),
+        text    = string.format(_("%d%% Read"), math.floor((bd.percent or 0) * 100)),
         face    = Font:getFace("smallinfofont", Screen:scaleBySize(11)),
         bold    = true,
         fgcolor = _CLR_DARK,
@@ -99,7 +99,7 @@ function M.build(w, ctx)
     if tl then
         meta[#meta+1] = VerticalSpan:new{ width = PCT_GAP }
         meta[#meta+1] = TextWidget:new{
-            text    = tl:upper() .. " TO GO",
+            text    = string.format(_("%s TO GO"), tl:upper()),
             face    = Font:getFace("smallinfofont", Screen:scaleBySize(9)),
             fgcolor = _CLR_MID,
             width   = tw,

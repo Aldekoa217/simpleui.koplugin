@@ -353,9 +353,9 @@ function M.build(w, ctx)
         local pct_str = string.format("%d%%", math.floor(pct * 100))
         local detail
         if goal > 0 then
-            detail = string.format("%d/%d books", read, goal)
+            detail = string.format(_("%d/%d books"), read, goal)
         else
-            detail = string.format("%d books", read)
+            detail = string.format(_("%d books"), read)
         end
         rows[#rows+1] = buildGoalRow(inner_w, _YEAR_STR, pct, pct_str, detail, on_annual_tap)
     end
@@ -370,7 +370,7 @@ function M.build(w, ctx)
         local pct_str   = string.format("%d%%", math.floor(pct * 100))
         local detail
         if goal_secs <= 0 then
-            detail = formatDuration(today_secs) .. " read"
+            detail = string.format(_("%s read"), formatDuration(today_secs))
         else
             detail = string.format("%s/%s",
                 formatDuration(today_secs), formatDuration(goal_secs))

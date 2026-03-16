@@ -5,6 +5,13 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local UIManager       = require("ui/uimanager")
 local logger          = require("logger")
 
+-- i18n MUST be installed before any other plugin module is require()'d.
+-- All modules capture local _ = require("gettext") at load time — if we
+-- replace package.loaded["gettext"] here, every subsequent require("gettext")
+-- in this plugin receives our wrapper automatically.
+local I18n = require("i18n")
+I18n.install()
+
 local Config    = require("config")
 local UI        = require("ui")
 local Bottombar = require("bottombar")
@@ -68,6 +75,7 @@ function SimpleUIPlugin:onTeardown()
         self._topbar_timer = nil
     end
     Patches.teardownAll(self)
+    I18n.uninstall()
 end
 
 -- ---------------------------------------------------------------------------
@@ -102,15 +110,10 @@ function SimpleUIPlugin:onResume()
         Topbar.scheduleRefresh(self, 0)
     end
     -- Only invalidate caches if we are returning from an active reading session.
-    -- package.loaded["apps/reader/readerui"] is present while the reader is open;
-    -- once it has closed, RUI.instance is nil. (#8)
     local RUI = package.loaded["apps/reader/readerui"]
     if RUI and not RUI.instance then
         local ok_rg, RG = pcall(require, "readinggoals")
         if ok_rg and RG and RG.Stats then RG.Stats.invalidateCache() end
-        -- Invalidate reading_stats cache so today/avg/streak reflect the
-        -- session that just ended. The cache is module-level and date-keyed,
-        -- so without this it would stay stale until midnight.
         local ok_rs, RS = pcall(require, "desktop_modules/module_reading_stats")
         if ok_rs and RS and RS.invalidateCache then RS.invalidateCache() end
     end
@@ -128,7 +131,6 @@ end
 function SimpleUIPlugin:_registerTouchZones(fm_self)
     Bottombar.registerTouchZones(self, fm_self)
     Topbar.registerTouchZones(self, fm_self)
-
 end
 
 function SimpleUIPlugin:_scheduleTopbarRefresh(delay)
@@ -198,7 +200,6 @@ function SimpleUIPlugin:_scheduleRebuild()
     end)
 end
 
-
 function SimpleUIPlugin:_updateFMHomeIcon() end
 
 -- ---------------------------------------------------------------------------
@@ -212,13 +213,11 @@ function SimpleUIPlugin:addToMainMenu(menu_items)
         menu_module_loaded = true
         local ok, err = pcall(function() require("menu")(SimpleUIPlugin) end)
         if not ok then
-            menu_module_loaded = false  -- allow retry on next call
+            menu_module_loaded = false
             logger.err("simpleui: menu.lua failed to load: " .. tostring(err))
             menu_items.simpleui = { sorting_hint = "tools", text = "Simple UI", sub_item_table = {} }
             return
         end
-        -- menu.lua replaced SimpleUIPlugin.addToMainMenu. Call it directly
-        -- via rawget so we bypass this wrapper and avoid infinite recursion.
         local real_fn = rawget(SimpleUIPlugin, "addToMainMenu")
         if real_fn then real_fn(self, menu_items) end
         return

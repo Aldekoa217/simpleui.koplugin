@@ -70,7 +70,7 @@ function M.build(w, ctx)
             SH.progressBar(cw, bd.percent, SH.RB_BAR_H),
             SH.vspan(SH.RB_GAP2, ctx.vspan_pool),
             TextWidget:new{
-                text    = string.format("%d%% Read", math.floor((bd.percent or 0) * 100)),
+                text    = string.format(_("%d%% Read"), math.floor((bd.percent or 0) * 100)),
                 face    = Font:getFace("smallinfofont", RB_PCT_FONT_SIZE),
                 bold    = true,
                 fgcolor = _CLR_TEXT_DARK,
