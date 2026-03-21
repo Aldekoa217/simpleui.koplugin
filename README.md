@@ -2,6 +2,9 @@
 
 A clean, distraction-free UI plugin for KOReader that transforms your reading experience. SimpleUI adds a **dedicated Home Screen**, a customisable bottom navigation bar, a top status bar, and a reworked library title bar, giving you instant access to your library, history, collections, and reading stats without navigating through nested menus.
 
+
+<img width="1072" height="724" alt="simpleui1 2 0" src="https://github.com/user-attachments/assets/690d1920-8212-41c7-a1af-d761b5fde47e" />
+
 ---
 
 ## Features
